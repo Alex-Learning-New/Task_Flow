@@ -20,6 +20,7 @@ import {
     escapeHtml,
     avatarHtml,
 } from "./common.js";
+import { emailProjectManager } from "./notify.js";
 import { mountWorksheet } from "./worksheet.js";
 import { uploadFiles, MAX_FILE_MB } from "./storage.js";
 import "./file-preview.js";
@@ -326,13 +327,23 @@ function openTaskDetail(taskId) {
 
             const updatedReports = [...(t.reports || [])];
 
-            if (reportText) {
+            const progressChanged = newProgress !== t.progress;
+            if (reportText || progressChanged || pendingFiles.length) {
                 updatedReports.push({
-                    text: reportText,
+                    text: reportText || `Progress updated from ${t.progress}% to ${newProgress}%`,
                     date: today(),
+                    at: new Date().toISOString(),
                     author: u.name,
                 });
             }
+
+            // if (reportText) {
+            //     updatedReports.push({
+            //         text: reportText,
+            //         date: today(),
+            //         author: u.name,
+            //     });
+            // }
 
             const { error } = await supabase
                 .from("tasks")
@@ -354,6 +365,8 @@ function openTaskDetail(taskId) {
             await loadData();
 
             toast("Update saved.", "success");
+
+            emailProjectManager(t, { employeeId: u.id, oldProgress: t.progress, newProgress, note: reportText, source: "project update" });
 
             closeModal("modal-task-detail");
 

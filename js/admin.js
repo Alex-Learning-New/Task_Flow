@@ -495,6 +495,65 @@ function renderAdminPeople() {
         });
 }
 
+/* ---------- create employee ---------- */
+function openCreateEmployee() {
+    document.getElementById("form-create-employee").reset();
+
+    const departments = [
+        ...new Set(
+            state.users
+                .filter((u) => u.role === "employee" && u.department)
+                .map((u) => u.department),
+        ),
+    ];
+    document.getElementById("cemp-dept-list").innerHTML = departments
+        .map((d) => `<option value="${escapeHtml(d)}"></option>`)
+        .join("");
+
+    document.getElementById("modal-create-employee").classList.remove("hidden");
+}
+
+document
+    .getElementById("form-create-employee")
+    .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById("cemp-name").value.trim();
+        const email = document.getElementById("cemp-email").value.trim().toLowerCase();
+        const department = document.getElementById("cemp-dept").value.trim();
+
+        if (state.users.some((u) => (u.email || "").toLowerCase() === email)) {
+            toast("An employee with this email already exists.", "error");
+            return;
+        }
+
+        let newUserId;
+        try {
+            newUserId = await nextId("users", "u");
+        } catch (err) {
+            toast(err.message, "error");
+            return;
+        }
+
+        const { error } = await supabase.from("users").insert({
+            id: newUserId,
+            name,
+            email,
+            department,
+            role: "employee",
+        });
+
+        if (error) {
+            toast(error.message, "error");
+            return;
+        }
+
+        await loadData();
+        closeModal("modal-create-employee");
+        rerenderCurrent();
+        toast("Employee added.", "success");
+    });
+
 // Filter controls live in static markup, so wire them once
 document.getElementById("employee-search").addEventListener("input", renderAdminPeople);
 document.getElementById("department-filter").addEventListener("change", renderAdminPeople);
@@ -632,6 +691,13 @@ function openTaskDetail(taskId) {
 
             await loadData();
             rerenderCurrent();
+
+            await logActivity({
+                type: "update_requested",
+                taskTitle: t.title,            // in the People table, loop over the tasks instead
+                actor: currentUser(),
+                projectManagerId: t.projectManagerId,
+            });
 
             toast("Status updated.", "success");
             openTaskDetail(taskId);
@@ -939,6 +1005,7 @@ initShell({
         "admin-overview": { label: "+ New project", onClick: openCreateTask },
         "admin-tasks": { label: "+ New project", onClick: openCreateTask },
         "admin-teams": { label: "+ New team", onClick: openCreateTeam },
+        "admin-people": { label: "+ New employee", onClick: openCreateEmployee },
     },
     render: renderAdminView,
     updateNavCounts: updateAdminNavCounts,

@@ -42,11 +42,11 @@ body::before {
      z-index: -1;
      pointer-events: none;
      background:
-          radial-gradient(45% 40% at 8% 6%, rgba(10, 132, 255, 0.42), transparent 70%),
-          radial-gradient(40% 40% at 95% 10%, rgba(191, 90, 242, 0.38), transparent 70%),
-          radial-gradient(45% 45% at 85% 95%, rgba(255, 55, 95, 0.28), transparent 70%),
-          radial-gradient(40% 40% at 10% 90%, rgba(48, 209, 88, 0.22), transparent 70%),
-          linear-gradient(180deg, #f2f4fd 0%, #eaeefa 100%);
+          /* radial-gradient(45% 40% at 8% 6%, rgba(10, 132, 255, 0.42), transparent 100%), */
+          /* radial-gradient(40% 40% at 95% 10%, rgba(191, 90, 242, 0.38), transparent 100%), */
+          /* radial-gradient(45% 45% at 85% 95%, rgba(255, 55, 95, 0.28), transparent 100%), */
+          /* radial-gradient(40% 40% at 10% 90%, rgba(48, 209, 88, 0.22), transparent 100%), */
+          linear-gradient(180deg, #9dafff 0%, #ffaefb 100%);
 }
 
 /* ---------- Glass surfaces ---------- */
@@ -161,7 +161,7 @@ td {
 .ws-file-chip,
 .department-member {
      background: rgba(255, 255, 255, 0.5);
-     border: 1px solid rgba(255, 255, 255, 0.65);
+     border: 1px solid rgba(109, 109, 109, 0.712);
 }
 
 .detail-meta-grid .mi,
@@ -171,7 +171,7 @@ td {
 
 .task-row:hover,
 tr.clickable:hover {
-     background: rgb(255, 255, 255);
+     background: rgba(255, 255, 255, 0.774);
      border: solid 1px #69696915;
      box-shadow: 1px 1px 10px 10px #1d1d1f18;
 }

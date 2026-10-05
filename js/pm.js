@@ -338,6 +338,13 @@ function openTaskDetail(taskId) {
             projectManagerId: t.projectManagerId,
         });
 
+        await logActivity({
+            type: "update_requested",
+            taskTitle: t.title,            // in the People table, loop over the tasks instead
+            actor: currentUser(),
+            projectManagerId: t.projectManagerId,
+        });
+
         await loadData();
         rerenderCurrent();
 

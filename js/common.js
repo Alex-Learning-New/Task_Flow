@@ -1,6 +1,6 @@
 "use strict";
 
-import { loadDatabase } from "./data.js";
+import { loadDatabase, loadData} from "./data.js";
 import { state } from "./state.js";
 import { openStoredFile } from "./storage.js";
 
@@ -912,6 +912,60 @@ function makeSidebarUserClickable() {
     });
 }
 
+/* ================= LIVE UPDATES ================= */
+let liveStarted = false;
+let refreshTimer = null;
+let refreshing = false;
+
+// views that should not be redrawn under the user (forms / own data loads)
+const NO_LIVE_REFRESH = new Set(["profile"]);
+
+async function liveRefresh() {
+    if (refreshing) return;
+    refreshing = true;
+    try {
+        await loadData();
+        const active = document.querySelector(".nav-item.active");
+        const viewId = active?.dataset.view;
+        if (viewId && !NO_LIVE_REFRESH.has(viewId)) rerenderCurrent();
+    } catch (e) {
+        console.warn("[live] refresh failed:", e);
+    } finally {
+        refreshing = false;
+    }
+}
+
+// Many events can arrive at once (e.g. "ask update" touches several tasks),
+// so wait a moment and refresh once.
+function scheduleRefresh() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(liveRefresh, 400);
+}
+
+export function startLiveUpdates() {
+    if (liveStarted) return;
+    liveStarted = true;
+
+    supabase
+        .channel("taskflow-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, scheduleRefresh)
+        .on("postgres_changes", { event: "*", schema: "public", table: "activity_log" }, scheduleRefresh)
+        .subscribe((status) => {
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                console.warn("[live] realtime unavailable, relying on polling");
+            }
+        });
+
+    // Safety net: poll every 30s while the tab is visible, and refresh
+    // when the user comes back to the tab.
+    setInterval(() => {
+        if (!document.hidden) scheduleRefresh();
+    }, 30000);
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) scheduleRefresh();
+    });
+}
+
 /**
  * Sets up the page shell for admin.html / employee.html.
  *
@@ -964,8 +1018,10 @@ export function initShell(config) {
         btn.addEventListener("click", () => goView(btn.dataset.view));
     });
 
+    
     initModals();
     goView(savedView() || config.defaultView);
+    startLiveUpdates();
     return user;
 }
 
