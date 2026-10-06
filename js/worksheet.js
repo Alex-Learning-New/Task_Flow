@@ -34,10 +34,31 @@ function prettyDate(d = new Date()) {
 
 function minutesBetween(start, end) {
     if (!start || !end) return null;
+
     const [sh, sm] = start.split(":").map(Number);
     const [eh, em] = end.split(":").map(Number);
-    const diff = eh * 60 + em - (sh * 60 + sm);
-    return diff > 0 ? diff : null;
+
+    const startMins = sh * 60 + sm;
+    const endMins = eh * 60 + em;
+
+    let total = endMins - startMins;
+
+    if (total <= 0) return null;
+
+    // Lunch break: 1:00 PM - 2:00 PM
+    const lunchStart = 13 * 60;
+    const lunchEnd = 14 * 60;
+
+    const overlap =
+        Math.max(
+            0,
+            Math.min(endMins, lunchEnd) -
+            Math.max(startMins, lunchStart)
+        );
+
+    total -= overlap;
+
+    return total;
 }
 
 function formatDuration(mins) {
